@@ -58,6 +58,19 @@ jobs:
         with:
           name: dotnet-app
 
+      - name: Locate downloaded package (.zip)
+        shell: pwsh
+        run: |
+          Write-Host "Searching for zip files under $PWD"
+          $zip = Get-ChildItem -Path $PWD -Recurse -Filter *.zip | Select-Object -First 1
+          if (-not $zip) {
+            Write-Error "No .zip package found in workspace after downloading artifacts"
+            exit 1
+          }
+          Write-Host "Found package: $($zip.FullName)"
+          # Expose absolute path to later steps
+          "PACKAGE_PATH=$($zip.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -71,4 +84,4 @@ jobs:
         with:
           app-name: 'izam'
           slot-name: 'Production'
-          package: ./dotnet-app/dotnet-app.zip
+          package: ${{ env.PACKAGE_PATH }}
