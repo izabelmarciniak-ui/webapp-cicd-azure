@@ -30,11 +30,20 @@ jobs:
       - name: Publish
         run: dotnet publish meritowebapp/meritowebapp.csproj -c Release -o "${{ github.workspace }}\myapp" --no-build
 
+      - name: Zip publish output
+        shell: pwsh
+        run: |
+          if (Test-Path "${{ github.workspace }}\myapp") {
+            Compress-Archive -Path "${{ github.workspace }}\myapp\*" -DestinationPath "${{ github.workspace }}\dotnet-app.zip" -Force
+          } else {
+            Write-Error "Publish output not found: ${{ github.workspace }}\myapp"
+          }
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-app
-          path: ${{ github.workspace }}/myapp
+          path: ${{ github.workspace }}/dotnet-app.zip
 
   deploy:
     runs-on: windows-latest
@@ -62,4 +71,4 @@ jobs:
         with:
           app-name: 'izam'
           slot-name: 'Production'
-          package: ./dotnet-app
+          package: ./dotnet-app/dotnet-app.zip
